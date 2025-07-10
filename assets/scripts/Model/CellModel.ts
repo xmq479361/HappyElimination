@@ -6,7 +6,7 @@ export class CellModel {
   private _row: number = 0
   private _column: number = 0
   public type: number = 0
-  private isSelected: boolean = false
+  public isSelected: boolean = false
   command: Command[] = [];
 
   init(row: number, column: number) {

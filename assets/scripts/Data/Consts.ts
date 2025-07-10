@@ -16,6 +16,7 @@ export enum CellState {
 }
 export enum Action {
   Move = "move",
+  Click = "click"
 }
 
 

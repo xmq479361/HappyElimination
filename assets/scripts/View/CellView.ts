@@ -1,5 +1,7 @@
 import {
   _decorator,
+  Animation,
+  AnimationState,
   Component,
   instantiate,
   log,
@@ -23,11 +25,14 @@ export class CellView extends Component {
   @property({ type: Number, displayName: "列" })
   col: number = 0;
   uiTransform: UITransform;
+  animation: Animation;
 
   private _sprite: Sprite;
 
   protected onLoad(): void {
     this._sprite = this.node.getComponent(Sprite);
+    this.uiTransform = this.node.getComponent(UITransform);
+    this.animation = this.node.getComponent(Animation);
   }
   protected onDestroy(): void {
     this.unscheduleAllCallbacks();
@@ -36,7 +41,6 @@ export class CellView extends Component {
     this.model = model;
     this.row = model.row;
     this.col = model.column;
-    this.uiTransform = this.node.getComponent(UITransform);
     this.uiTransform.setContentSize(
       MapManager.Instance.cellWidth,
       MapManager.Instance.cellHeight
@@ -52,8 +56,23 @@ export class CellView extends Component {
     );
     this.node.setPosition(position);
   }
+  cancelSelectedAnimation() {
+  }
+
+  isPlayingClick : boolean = false;
 
   protected update(dt: number): void {
+    if (this.animation != null) {
+        if (!this.isPlayingClick) {// this.animation.getState("cat_click").isPlaying) {
+            if (this.model.isSelected) {
+                this.isPlayingClick = true;
+                this.animation.play();
+            }
+        } else  if (!this.model.isSelected) {
+            this.isPlayingClick = false;
+            this.animation.stop();
+        }
+    }
     if (this.model.command.length == 0) return;
     let command = this.model.command.shift();
     log("CellView: ", command);
@@ -69,6 +88,9 @@ export class CellView extends Component {
             })
             .start();
           break;
+        // case Action.Click:
+        //   this.animation.play("cat_click");
+        //   break;
         // case CellState.Click.toString():
         //     // this.click();
         //     break;
