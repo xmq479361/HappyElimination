@@ -164,7 +164,11 @@
         "__expectedType__": "cc.AnimationClip"
       },
       {
-        "__uuid__": "495304b4-e185-4978-a5d1-ccced0130bfe",
+        "__uuid__": "9f883ee3-6bb0-4b4d-b625-97ffdc05f92d",
+        "__expectedType__": "cc.AnimationClip"
+      },
+      {
+        "__uuid__": "9f883ee3-6bb0-4b4d-b625-97ffdc05f92d",
         "__expectedType__": "cc.AnimationClip"
       }
     ],

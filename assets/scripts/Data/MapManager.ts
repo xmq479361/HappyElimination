@@ -61,6 +61,9 @@ export class MapManager {
       this.column / 2.0
     );
   }
+  validOffset(point: Vec2): boolean {
+    return point.x >= 0 && point.x < this._column && point.y >= 0 && point.y < this._row;
+}
   getCellPosition(row: number, column: number): Vec3 {
     return new Vec3(
       column * this._cellWidth + this._offsetX,

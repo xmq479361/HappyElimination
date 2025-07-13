@@ -96,8 +96,9 @@ export class Grid extends Component {
       this.touchEnable = true
     }, 0.5)
   }
-  initWithCellModels(models: CellModel[][]) {
+  initWithCellModels() {
     this.gridModel.init();
+    let models = this.gridModel.cells;
     for (let i = 0; i < models.length; i++) {
       let rowModels = models[i]
       for (let j = 0; j < rowModels.length; j++) {

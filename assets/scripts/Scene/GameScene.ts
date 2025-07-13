@@ -32,7 +32,7 @@ export class GameScene extends Component {
     loadGameData() {
         this.gridView.removeAllChildren();
         MapManager.Instance.init(4, 4);
-        this.grid.initWithCellModels(this.gridModel.cells);
+        this.grid.initWithCellModels();
     }
 }
 

@@ -6,6 +6,7 @@ export interface Command {
   delayTime?: number
   row?: number
   column?: number
+  isVisible?: boolean
 }
 export enum CellState {
   None = 0,
@@ -16,7 +17,9 @@ export enum CellState {
 }
 export enum Action {
   Move = "move",
-  Click = "click"
+  Click = "click",
+  Crush = "crush",
+  Shake = "shake"
 }
 
 
