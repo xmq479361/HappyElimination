@@ -27,12 +27,15 @@ export class CellView extends Component {
   uiTransform: UITransform;
   animation: Animation;
 
+  @property(Node)
+  selectedBorder: Node;
   private _sprite: Sprite;
 
   protected onLoad(): void {
     this._sprite = this.node.getComponent(Sprite);
     this.uiTransform = this.node.getComponent(UITransform);
     this.animation = this.node.getComponent(Animation);
+    this.selectedBorder.active = false;
   }
   protected onDestroy(): void {
     this.unscheduleAllCallbacks();
@@ -66,11 +69,13 @@ export class CellView extends Component {
         if (!this.isPlayingClick) {// this.animation.getState("cat_click").isPlaying) {
             if (this.model.isSelected) {
                 this.isPlayingClick = true;
+                this.selectedBorder.active = true;
                 this.animation.play();
             }
         } else  if (!this.model.isSelected) {
             this.isPlayingClick = false;
             this.animation.stop();
+            this.selectedBorder.active = false;
         }
     }
     if (this.model.command.length == 0) return;
