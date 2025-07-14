@@ -8,7 +8,8 @@ import {
   input,
   Input,
   EventTouch,
-  UITransform
+  UITransform,
+  Vec2
 } from "cc"
 import { CellModel } from "../Model/CellModel"
 import { CellView } from "./CellView"
@@ -85,16 +86,65 @@ export class Grid extends Component {
       index.y >= MapManager.Instance.row
     )
       return
-    if (this.gridModel.selectCell(index) == false) {
-      this.disableTouchEvent()
+    let result = this.gridModel.selectCell(index) ;
+    let updatePoints = result && result.length > 0 ? result[0] : [];
+    if (updatePoints.length > 0) {
+      this.disableTouchEvent(this.getPlayAniTime(updatePoints))
+      // this.disableTouch(this.getPlayAniTime(updatePoints), this.getStep(effectsQueue));
+      this.updateView(updatePoints);
     }
   }
-  disableTouchEvent() {
-    console.log("disableTouchEvent : ")
+  updateView(updatePoints: Vec2[]) {
+      updatePoints.forEach((point) => {
+          let cellModel = this.gridModel.cells[point.y][point.x];
+          if (!cellModel.isAttach) {
+            const cellNode = instantiate(this.gridPrefabs[cellModel.type])
+            cellNode.parent = this.node
+            let cellView = cellNode.getComponent(CellView)
+            cellView.initByViewModel(cellModel)
+          }
+      })
+      // for (let i = 0; i < MapManager.Instance.row; i++) {
+      //   for (let j = 0; j < MapManager.Instance.column; j++) {
+      //     let cellModel = this.gridModel.cells[i][j];
+      //     if (!cellModel) {
+      //       let cellView: CellView = this.node.children[i * MapManager.Instance.column + j].getComponent(CellView);
+      //       cellView.initByViewModel(cellModel);
+      //     }
+      //   }
+      // }
+    // let models = this.gridModel.cells;
+    // for (let i = 0; i < models.length; i++) {
+    //   let rowModels = models[i]
+    //   for (let j = 0; j < rowModels.length; j++) {
+    //     const cellNode = instantiate(this.gridPrefabs[rowModels[j].type])
+    //     cellNode.parent = this.node
+    //     let cellView = cellNode.getComponent(CellView)
+    //     cellView.initByViewModel(rowModels[j])
+    //   }
+    // }
+  }
+  
+  getPlayAniTime(changeModels){
+    if(!changeModels){
+        return 0;
+    }
+    var maxTime = 0;
+    changeModels.forEach(function(ele){
+        ele.command.forEach(function(cmd){
+            if(maxTime < cmd.playTime + cmd.keepTime){
+                maxTime = cmd.playTime + cmd.keepTime;
+            }
+        },this)
+    },this);
+    return maxTime;
+  }
+  disableTouchEvent(delayTime: number) {
+    console.log("disableTouchEvent: ", delayTime)
     this.touchEnable = false
     this.scheduleOnce(() => {
       this.touchEnable = true
-    }, 0.5)
+    }, delayTime)
   }
   initWithCellModels() {
     this.gridModel.init();

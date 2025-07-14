@@ -42,6 +42,7 @@ export class CellView extends Component {
   }
   initByViewModel(model: CellModel) {
     this.model = model;
+    this.model.isAttach = true;
     this.row = model.row;
     this.col = model.column;
     this.uiTransform.setContentSize(
@@ -94,7 +95,6 @@ export class CellView extends Component {
             .start();
           break;
         case Action.Shake:
-            
             let originalAngle = this.node.angle;
             let shakeDuration = command.playTime / 4;
             let shakeAngle = 5;
@@ -125,11 +125,8 @@ export class CellView extends Component {
           this.animation.play("crush");
           this.scheduleOnce(() => {
             this.node.destroy();
-          }, command.playTime);
+          }, command.playTime+command.delayTime);
           break;
-        // case CellState.Click.toString():
-        //     // this.click();
-        //     break;
         default:
           break;
       }

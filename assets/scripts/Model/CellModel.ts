@@ -8,6 +8,7 @@ export class CellModel {
   public type: number = -1
   public isSelected: boolean = false
   isDeath: boolean = false
+  isAttach: boolean = false
   command: Command[] = [];
 
   init(row: number, column: number) {
@@ -34,7 +35,7 @@ export class CellModel {
   }
 
   moveTo(target: Vec2) {
-    log("moveTo:", this.row, this.column, target.x, target.y)
+    log("moveTo:", this.row, "X", this.column, "=>", target.y , "X", target.x)
     this.command.push({
       action: Action.Move,
       playTime: AnimateTime.TOUCH_MOVE,
@@ -70,8 +71,9 @@ export class CellModel {
     // this._row = target.y
     // this._column = target.x
   }
-  crush(playTime: number) {
-    log("crush:", this.column, this.row)
+  crush() {
+    this.isDeath = true;
+    log("crush:", this.row, this.column, this.type)
     this.command.push({
       action: Action.Crush,
       playTime: AnimateTime.DIE,

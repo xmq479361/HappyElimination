@@ -76,13 +76,14 @@ export class GridModel {
     return this._cells
   }
 
-  selectCell(index: Vec2): boolean {
+  selectCell(index: Vec2) {
     console.log("selectCell: ", index)
     let lastSelected = this.lastSelected
+    if (!this.cells[index.y][index.x]) return;
     if (lastSelected == null) {
       this.cells[index.y][index.x].setSelected(true)
       this.lastSelected = index
-      return true
+      return []
     }
     let selectedIndexOffset =
       Math.abs(lastSelected.x - index.x) + Math.abs(lastSelected.y - index.y)
@@ -92,7 +93,7 @@ export class GridModel {
       this.lastSelected = index
       this.cells[lastSelected.y][lastSelected.x].setSelected(false)
       this.cells[index.y][index.x].setSelected(true)
-      return true
+      return []
     }
     console.log("selectCell: 相邻格子. 直接切换.", index, this.lastSelected)
 
@@ -102,6 +103,7 @@ export class GridModel {
     let currSameTypePoints = this.checkPoint(index)
     let lastSameTypePoints = this.checkPoint(this.lastSelected)
     console.log("lastSameTypePoints", lastSameTypePoints)
+      let crushPoints = []
     if (currSameTypePoints.length < 2 && lastSameTypePoints.length < 2) {
       lastCell.moveToAndBack(index)
       currCell.moveToAndBack(lastSelected)
@@ -109,13 +111,19 @@ export class GridModel {
     } else {
       lastCell.moveTo(lastSelected)
       currCell.moveTo(index)
-      currSameTypePoints.concat(lastSameTypePoints);
-      this.performCrush(currSameTypePoints)
+      if (currSameTypePoints.length > 2) {
+        crushPoints = crushPoints.concat(currSameTypePoints);
+      }
+      if (lastSameTypePoints.length > 2) {
+        crushPoints = crushPoints.concat(lastSameTypePoints);
+      }
+      console.log("crushPoints", crushPoints)
+      this.performCrush(crushPoints)
     }
     this.lastSelected = null
     lastCell.setSelected(false)
     currCell.setSelected(false)
-    return false
+    return [crushPoints]
   }
 
   checkPoint(point: Vec2) {
@@ -189,11 +197,39 @@ export class GridModel {
   }
 
   performCrush(crushItems: Vec2[]): void {
+    console.log("performCrush: ", crushItems);
       crushItems.forEach((p) => {
         if (this.cells[p.y][p.x]) {
           this.cells[p.y][p.x].crush()
+          this.cells[p.y][p.x] = null;
         }
       })
+      
+      for (let i = 0; i < MapManager.Instance.column; i++) {
+        let offsetY = 0;
+        for (let row = MapManager.Instance.row -1; row > 0; row--) {
+            let cellModel = this._cells[row][i];
+            if ((cellModel == null || cellModel.isDeath)) {
+            while (cellModel == null || cellModel.isDeath) {
+              offsetY++;
+              console.log('offsetY: ', offsetY, row, "X", i);
+              if (row - offsetY < 0) break;
+              cellModel = this._cells[row - offsetY][i];
+              this._cells[row - offsetY][i] = null;
+            }
+              console.log('offsetY: ', offsetY, row, "X", i, cellModel);
+            if (cellModel == null || cellModel.isDeath) {
+              cellModel = new CellModel();
+              cellModel.init(row - offsetY, i);
+              cellModel.setType(this.getRandomCellType());
+              cellModel.setPoint(new Vec2(i, row - offsetY));
+              cellModel.moveTo(new Vec2(i, row));
+              console.log("create new cell: ", i, "X", row, ":: ", offsetY);
+            }
+            this._cells[row][i] = cellModel;
+          }
+        }
+      }
   }
   exchangeCells(pos1: Vec2, pos2: Vec2) {
     var tmpModel = this.cells[pos1.y][pos1.x]
