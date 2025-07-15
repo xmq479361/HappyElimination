@@ -46,7 +46,10 @@ export class CellView extends Component {
       MapManager.Instance.cellHeight
     );
     this.uiTransform.setAnchorPoint(0, 0);
-    let position = MapManager.Instance.getCellPosition(model.row, model.column);
+    let position = MapManager.Instance.getCellPosition(
+      model.row + model.offset.y,
+      model.column + model.offset.x
+    );
     console.log(
       "initByViewModel: ",
       position,

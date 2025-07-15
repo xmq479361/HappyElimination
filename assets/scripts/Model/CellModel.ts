@@ -11,6 +11,8 @@ export class CellModel {
   isAttach: boolean = false;
   command: Command[] = [];
 
+  offset: Vec2 = new Vec2(0, 0);
+
   init(row: number, column: number) {
     this._row = row;
     this._column = column;
@@ -22,9 +24,15 @@ export class CellModel {
   setSelected(value: boolean) {
     this.isSelected = value;
   }
+  setOffset(offset: Vec2) {
+    this.offset = offset;
+  }
   setPoint(point: Vec2) {
     this._row = point.y;
     this._column = point.x;
+  }
+  toPoint(): Vec2 {
+    return new Vec2(this._column, this._row);
   }
   get row() {
     return this._row;
@@ -41,15 +49,17 @@ export class CellModel {
   ) {
     log(
       "moveTo:",
-      this.row,
-      "X",
       this.column,
-      "=>",
-      target.y,
       "X",
+      this.row,
+      "=>",
       target.x,
+      "X",
+      target.y,
       " delayTime:",
-      delayTime
+      delayTime,
+      " playTime:",
+      playTime
     );
     this.command.push({
       action: Action.Move,
@@ -58,8 +68,6 @@ export class CellModel {
       row: target.y,
       column: target.x,
     });
-    // this._row = target.y;
-    // this._column = target.x;
   }
   moveToAndBack(target: Vec2) {
     log("moveToAndBack:", this.column, this.row, target.x, target.y);
@@ -83,8 +91,6 @@ export class CellModel {
       row: target.y,
       column: target.x,
     });
-    // this._row = target.y
-    // this._column = target.x
   }
   crush() {
     this.isDeath = true;
@@ -121,7 +127,7 @@ export class CellModel {
     });
   }
 
-  toString() {
+  ToString() {
     return this.column + "X" + this.row + "(" + this.type + ")";
   }
 }

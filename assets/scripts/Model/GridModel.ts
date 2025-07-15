@@ -2,6 +2,7 @@ import { log, Vec2 } from "cc";
 import { MapManager } from "../Data/MapManager";
 import { CellModel } from "./CellModel";
 import { AnimateTime, CellState } from "../Data/Consts";
+import { Utils } from "../Utils/Utils";
 
 export class GridModel {
   private _cells: CellModel[][];
@@ -49,8 +50,8 @@ export class GridModel {
         let sameTypes = [];
         let retryTimce = 0;
         while (canCleanFlag && retryTimce < 9) {
-          let newType = this.getRandomCellType(sameTypes);
           retryTimce++;
+          let newType = this.getRandomCellType(sameTypes);
           this._cells[i][j].setType(newType);
           let samePoints = this.checkPoint(new Vec2(j, i));
           canCleanFlag = samePoints.length >= 3;
@@ -81,13 +82,6 @@ export class GridModel {
       this.cells[index.y][index.x].setSelected(true);
       return [];
     }
-    console.log(
-      "selectCell: 相邻格子. ",
-      selectedIndexOffset,
-      index,
-      this.lastSelected
-    );
-
     this.exchangeCells(index, this.lastSelected);
     let currCell = this.cells[index.y][index.x];
     let lastCell = this.cells[lastSelected.y][lastSelected.x];
@@ -114,11 +108,12 @@ export class GridModel {
       crushPoints = crushPoints.concat(lastSameTypePoints);
     }
     console.log("crushPoints", crushPoints);
-    let effectCells = this.performCrush(crushPoints);
+    let timeDelay = AnimateTime.TOUCH_MOVE + AnimateTime.DIE;
+    let effectCells = this.performCrush(crushPoints, timeDelay);
     return [crushPoints, effectCells];
   }
 
-  checkPoint(point: Vec2) {
+  checkPoint(point: Vec2): Vec2[] {
     let colPoints = this.checkWithDirection(point, [
       new Vec2(1, 0),
       new Vec2(-1, 0),
@@ -165,39 +160,70 @@ export class GridModel {
   }
 
   checkWithDirection(point: Vec2, direction: Vec2[]) {
+    if (!this.cells[point.y] || !this.cells[point.y][point.x]) return [];
     let result = [];
     let currType = this.cells[point.y][point.x].type;
     console.log("checkWithDirection:", currType, point);
-    // result.push(point.clone())
     for (let i = 0; i < direction.length; i++) {
       let offset = direction[i];
       let newPoint = point.clone().add(offset);
       while (MapManager.Instance.validOffset(newPoint)) {
-        // console.log(
-        //   "\t==check:",
-        //   offset,
-        //   newPoint,
-        //   this.cells[newPoint.y][newPoint.x].type
-        // )
-        if (this.cells[newPoint.y][newPoint.x].type != currType) break;
-
+        if (
+          !this.cells[newPoint.y][newPoint.x] ||
+          this.cells[newPoint.y][newPoint.x].type != currType
+        )
+          break;
         result.push(newPoint);
         newPoint = newPoint.clone().add(offset);
       }
     }
     return result;
   }
-
-  performCrush(crushItems: Vec2[]): Array<CellModel> {
-    console.log("performCrush: ", crushItems);
-    crushItems.forEach((p) => {
+  // 处理消除逻辑
+  performCrush(effectPoints: Vec2[], timeDelay: number): Array<CellModel> {
+    console.log("performCrush: ", effectPoints);
+    let effectCells = effectPoints.map((p) => this.cells[p.y][p.x]);
+    effectPoints.forEach((p) => {
       if (this.cells[p.y][p.x]) {
         this.cells[p.y][p.x].crush();
         this.cells[p.y][p.x] = null;
       }
     });
+    let downEffectCells = this.performDown(timeDelay);
+    let resultCells: CellModel[] = effectCells.concat(downEffectCells);
+    timeDelay += AnimateTime.DOWN;
+    /// 下落后再次检测是否有可消除的元素
+    // 如果有可消除的元素，则将其加入到effectPoints中
+    let currEffectPoints: Vec2[] = [];
+    downEffectCells.forEach((p) => {
+      console.log("performCrush cycle: ", p.toPoint());
+      let samePoints = this.checkPoint(p.toPoint());
+      if (samePoints.length > 2) {
+        currEffectPoints = currEffectPoints.concat(samePoints);
+      }
+    });
+    currEffectPoints = Utils.unionPoints(currEffectPoints);
+    log("currEffectPoints: ", currEffectPoints.length);
+    // 递归处理可消除的元素
+    if (currEffectPoints.length > 0) {
+      log("递归处理可消除的元素: ", currEffectPoints);
+      let otherCells = this.performCrush(currEffectPoints, timeDelay + 0.5);
+      resultCells = resultCells.concat(otherCells);
+    }
+    return Utils.unionCells(resultCells);
+  }
+
+  printInfo() {
+    for (var i = 1; i <= 9; i++) {
+      var printStr = "";
+      for (var j = 1; j <= 9; j++) {
+        printStr += this.cells[i][j].type + " ";
+      }
+      console.log(printStr);
+    }
+  }
+  performDown(timeDelay: number) {
     let effectCells = [];
-    let downTimeDelay = AnimateTime.TOUCH_MOVE + AnimateTime.DIE;
     // 处理每一列的下落逻辑
     for (let col = 0; col < MapManager.Instance.column; col++) {
       let emptyCount = 0;
@@ -209,9 +235,6 @@ export class GridModel {
       // # 2      1
       // # 1      2    3        2
       // # 0      2    2        1
-
-      // # -2      2   0        x
-      // # -1      2   1        x
       for (let row = MapManager.Instance.row - 1; row >= 0; row--) {
         let cellModel = this._cells[row][col];
 
@@ -227,22 +250,26 @@ export class GridModel {
           cellModel.moveTo(
             new Vec2(col, targetRow),
             AnimateTime.DOWN,
-            downTimeDelay
+            timeDelay
           );
           this._cells[targetRow][col] = cellModel;
           this._cells[row][col] = null;
           effectCells.push(cellModel);
         }
       }
-
+      if (emptyCount == 0) continue;
+      console.log("create: ", col, "emptyCount:", emptyCount);
       // 在顶部添加新的cell
+      // 补充新的cell, 并处理下落逻辑
+      // # -2     2   0        x
+      // # -1     2   1        x
       for (let i = 0; i < emptyCount; i++) {
         let row = i;
         let cellModel = new CellModel();
-        cellModel.init(row - emptyCount, col);
+        cellModel.init(row, col);
         cellModel.setType(this.getRandomCellType());
-        cellModel.setPoint(new Vec2(col, row - emptyCount));
-        cellModel.moveTo(new Vec2(col, row), AnimateTime.DOWN, downTimeDelay);
+        cellModel.setOffset(new Vec2(0, -emptyCount));
+        cellModel.moveTo(new Vec2(col, row), AnimateTime.DOWN, timeDelay);
         this._cells[row][col] = cellModel;
         effectCells.push(cellModel);
       }
