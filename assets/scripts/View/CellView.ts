@@ -1,15 +1,12 @@
 import {
   _decorator,
   Animation,
-  AnimationState,
   Component,
-  instantiate,
   log,
   Node,
-  Prefab,
-  Sprite,
   tween,
   UITransform,
+  Vec2,
 } from "cc";
 import { CellModel } from "../Model/CellModel";
 import { MapManager } from "../Data/MapManager";
@@ -26,13 +23,12 @@ export class CellView extends Component {
   col: number = 0;
   uiTransform: UITransform;
   animation: Animation;
+  isPlayingClick: boolean = false;
 
   @property(Node)
   selectedBorder: Node;
-  private _sprite: Sprite;
 
   protected onLoad(): void {
-    this._sprite = this.node.getComponent(Sprite);
     this.uiTransform = this.node.getComponent(UITransform);
     this.animation = this.node.getComponent(Animation);
     this.selectedBorder.active = false;
@@ -52,7 +48,7 @@ export class CellView extends Component {
     this.uiTransform.setAnchorPoint(0, 0);
     let position = MapManager.Instance.getCellPosition(model.row, model.column);
     console.log(
-      "CellView: ",
+      "initByViewModel: ",
       position,
       model.row,
       model.column,
@@ -60,24 +56,22 @@ export class CellView extends Component {
     );
     this.node.setPosition(position);
   }
-  cancelSelectedAnimation() {
-  }
-
-  isPlayingClick : boolean = false;
+  cancelSelectedAnimation() {}
 
   protected update(dt: number): void {
     if (this.animation != null) {
-        if (!this.isPlayingClick) {// this.animation.getState("cat_click").isPlaying) {
-            if (this.model.isSelected) {
-                this.isPlayingClick = true;
-                this.selectedBorder.active = true;
-                this.animation.play();
-            }
-        } else  if (!this.model.isSelected) {
-            this.isPlayingClick = false;
-            this.animation.stop();
-            this.selectedBorder.active = false;
+      if (!this.isPlayingClick) {
+        // this.animation.getState("cat_click").isPlaying) {
+        if (this.model.isSelected) {
+          this.isPlayingClick = true;
+          this.selectedBorder.active = true;
+          this.animation.play();
         }
+      } else if (!this.model.isSelected) {
+        this.isPlayingClick = false;
+        this.animation.stop();
+        this.selectedBorder.active = false;
+      }
     }
     if (this.model.command.length == 0) return;
     let command = this.model.command.shift();
@@ -85,47 +79,52 @@ export class CellView extends Component {
     this.scheduleOnce(() => {
       switch (command.action) {
         case Action.Move:
+          let target = MapManager.Instance.getCellPosition(
+            command.row,
+            command.column
+          );
           tween(this.node)
             .to(command.playTime, {
-              position: MapManager.Instance.getCellPosition(
-                command.row,
-                command.column
-              ),
+              position: target,
+            })
+            .call(() => {
+              this.model.setPoint(new Vec2(command.column, command.row));
             })
             .start();
           break;
         case Action.Shake:
-            let originalAngle = this.node.angle;
-            let shakeDuration = command.playTime / 4;
-            let shakeAngle = 5;
-            tween(this.node)
+          let originalAngle = this.node.angle;
+          let shakeDuration = command.playTime / 5;
+          let shakeAngle = 3;
+          tween(this.node)
             .to(shakeDuration, { angle: originalAngle + shakeAngle })
             .to(shakeDuration, { angle: originalAngle - shakeAngle })
             .to(shakeDuration, { angle: originalAngle + shakeAngle })
+            .to(shakeDuration, { angle: originalAngle - shakeAngle })
             .to(shakeDuration, { angle: originalAngle })
             .start();
-                                     // 缓动的时长
-        // tween(this.node.rotation).to( command.playTime, 1,    // 这里以node的位置信息坐标缓动的目标 
-        //     {                                                               // ITweenOption 的接口实现：
-        //     onUpdate : (target:Vec3, ratio:number)=>{                       // onUpdate 接受当前缓动的进度
-        //         this.node.position = target;                                // 将缓动系统计算出的结果赋予 node 的位置
-        //     }
-        // }).start();            
-        //   tween(this.node)
-        //   .by()
-        //     .to(command.playTime, {
-        //       position: MapManager.Instance.getCellPosition(
-        //         command.row,
-        //         command.column
-        //       ),
-        //     })
-        //     .start();
+          // 缓动的时长
+          // tween(this.node.rotation).to( command.playTime, 1,    // 这里以node的位置信息坐标缓动的目标
+          //     {                                                               // ITweenOption 的接口实现：
+          //     onUpdate : (target:Vec3, ratio:number)=>{                       // onUpdate 接受当前缓动的进度
+          //         this.node.position = target;                                // 将缓动系统计算出的结果赋予 node 的位置
+          //     }
+          // }).start();
+          //   tween(this.node)
+          //   .by()
+          //     .to(command.playTime, {
+          //       position: MapManager.Instance.getCellPosition(
+          //         command.row,
+          //         command.column
+          //       ),
+          //     })
+          //     .start();
           break;
         case Action.Crush:
           this.animation.play("crush");
           this.scheduleOnce(() => {
             this.node.destroy();
-          }, command.playTime+command.delayTime);
+          }, command.playTime + command.delayTime);
           break;
         default:
           break;
