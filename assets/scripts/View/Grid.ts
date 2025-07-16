@@ -74,9 +74,10 @@ export class Grid extends Component {
       return;
     let result = this.gridModel.selectCell(index);
     console.log("selectCell result: ", result);
+    if (result == null) return;
     let [updatePoints, effectCells] = result; /// && result.length > 0 ? result[0] : [];
     console.log("updatePoints: ", updatePoints);
-    if (updatePoints && updatePoints.length > 0) {
+    if (effectCells != null && effectCells.length > 0) {
       let animationTime = Utils.getCellAnimateTime(effectCells);
       this.disableTouchEvent(animationTime);
       this.updateView(effectCells);

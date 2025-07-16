@@ -35,6 +35,7 @@ export class Utils {
         result.push(cell);
       }
     });
+    console.log("mergeCells: ", cells1.length, exists, "=>", result);
     return result;
   }
   static unionPoints(cells: Vec2[]): Vec2[] {
@@ -42,10 +43,13 @@ export class Utils {
     let result = [];
     cells.forEach((cell) => {
       let cellKey = cell.x + "_" + cell.y;
-      if (exists.push(cellKey) > -1) {
+      if (exists.indexOf(cellKey) < 0) {
+        exists.push(cellKey)
+        console.log("unionPoints: ", cellKey, "=>", exists.length);
         result.push(cell);
       }
     });
+    console.log("unionPoints: ", cells.length, exists, "=>", result);
     return result;
   }
   static unionCells(cells: CellModel[]): CellModel[] {
@@ -57,6 +61,7 @@ export class Utils {
         result.push(cell);
       }
     });
+    console.log("unionCells: ", exists, "=>", result);
     return result;
   }
 
@@ -65,13 +70,13 @@ export class Utils {
     point: Vec2,
     direction: Vec2[]
   ): Vec2[] {
-    if (!cells[point.y] || !cells[point.y][point.x]) return [];
+    if (cells[point.y] == null || cells[point.y][point.x] == null) return [];
     let result: Vec2[] = [];
     let currType = cells[point.y][point.x].type;
-    console.log("checkWithDirection:", currType, point);
     for (let i = 0; i < direction.length; i++) {
       let offset = direction[i];
       let newPoint = point.clone().add(offset);
+      console.log("checkWithDirection:", currType, offset, "=>", newPoint);
       while (MapManager.Instance.validOffset(newPoint)) {
         if (
           !cells[newPoint.y][newPoint.x] ||

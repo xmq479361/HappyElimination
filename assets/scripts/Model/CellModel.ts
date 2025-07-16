@@ -92,13 +92,13 @@ export class CellModel {
       column: target.x,
     });
   }
-  crush() {
+  crush(timeDelay) {
     this.isDeath = true;
     log("crush:", this.row, this.column, this.type);
     this.command.push({
       action: Action.Crush,
       playTime: AnimateTime.DIE,
-      delayTime: AnimateTime.TOUCH_MOVE,
+      delayTime: timeDelay,
     });
   }
   toDie(playTime) {
@@ -118,11 +118,11 @@ export class CellModel {
     });
   }
 
-  setVisible(playTime, isVisible) {
+  setVisible(isVisible, playTime, delayTime) {
     this.command.push({
-      action: "setVisible",
+      action: Action.SetVisible,
       playTime: playTime,
-      delayTime: 0,
+      delayTime: delayTime,
       isVisible: isVisible,
     });
   }

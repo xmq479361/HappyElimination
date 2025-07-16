@@ -119,19 +119,22 @@ export class GridModel {
     let effectCells = effectPoints.map((p) => this.cells[p.y][p.x]);
     effectPoints.forEach((p) => {
       if (this.cells[p.y][p.x]) {
-        this.cells[p.y][p.x].crush();
+        this.cells[p.y][p.x].crush(timeDelay);
         this.cells[p.y][p.x] = null;
       }
     });
+    timeDelay += 1;
     let downEffectCells = this.performDown(timeDelay);
     let resultCells: CellModel[] = effectCells.concat(downEffectCells);
     timeDelay += AnimateTime.DOWN;
+    let downPoints = downEffectCells.map((p) => p.toPoint()).concat(effectPoints);
+    console.log("downPoints: ", downPoints);
     /// 下落后再次检测是否有可消除的元素
     // 如果有可消除的元素，则将其加入到effectPoints中
     let currEffectPoints: Vec2[] = [];
-    downEffectCells.forEach((p) => {
-      console.log("performCrush cycle: ", p.toPoint());
-      let samePoints = Utils.checkPoint(this._cells, p.toPoint());
+    downPoints.forEach((p) => {
+      console.log("performCrush cycle: ", p);
+      let samePoints = Utils.checkPoint(this._cells, p);
       if (samePoints.length > 2) {
         currEffectPoints = currEffectPoints.concat(samePoints);
       }
@@ -141,7 +144,7 @@ export class GridModel {
     // 递归处理可消除的元素
     if (currEffectPoints.length > 0) {
       log("递归处理可消除的元素: ", currEffectPoints);
-      let otherCells = this.performCrush(currEffectPoints, timeDelay + 0.5);
+      let otherCells = this.performCrush(currEffectPoints, timeDelay + 1.5);
       resultCells = resultCells.concat(otherCells);
     }
     return Utils.unionCells(resultCells);
@@ -203,6 +206,8 @@ export class GridModel {
         cellModel.init(row, col);
         cellModel.setType(this.getRandomCellType());
         cellModel.setOffset(new Vec2(0, -emptyCount));
+        cellModel.setVisible(false, 0, 0)
+        cellModel.setVisible(true, 0, timeDelay - AnimateTime.DOWN)
         cellModel.moveTo(new Vec2(col, row), AnimateTime.DOWN, timeDelay);
         this._cells[row][col] = cellModel;
         effectCells.push(cellModel);

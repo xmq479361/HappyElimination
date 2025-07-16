@@ -20,6 +20,7 @@ export enum Action {
   Click = "click",
   Crush = "crush",
   Shake = "shake",
+  SetVisible = "setVisible"
 }
 
 // ********************   时间表  animation time **************************

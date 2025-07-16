@@ -4,7 +4,9 @@ import {
   Component,
   log,
   Node,
+  Sprite,
   tween,
+  UIOpacity,
   UITransform,
   Vec2,
 } from "cc";
@@ -27,6 +29,8 @@ export class CellView extends Component {
 
   @property(Node)
   selectedBorder: Node;
+
+  sprite: Sprite;
 
   protected onLoad(): void {
     this.uiTransform = this.node.getComponent(UITransform);
@@ -58,6 +62,7 @@ export class CellView extends Component {
       MapManager.Instance.cellWidth
     );
     this.node.setPosition(position);
+    this.addComponent(UIOpacity);
   }
   cancelSelectedAnimation() {}
 
@@ -128,6 +133,11 @@ export class CellView extends Component {
           this.scheduleOnce(() => {
             this.node.destroy();
           }, command.playTime + command.delayTime);
+          break;
+        case Action.SetVisible:
+          this.scheduleOnce(() => {
+            this.getComponent(UIOpacity).opacity = command.isVisible == true ? 255 : 0;
+          }, command.delayTime);
           break;
         default:
           break;
