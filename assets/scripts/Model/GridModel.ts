@@ -53,7 +53,7 @@ export class GridModel {
           retryTimce++;
           let newType = this.getRandomCellType(sameTypes);
           this._cells[i][j].setType(newType);
-          let samePoints = this.checkPoint(new Vec2(j, i));
+          let samePoints = Utils.checkPoint(this._cells, new Vec2(j, i));
           canCleanFlag = samePoints.length >= 3;
         }
       }
@@ -85,8 +85,8 @@ export class GridModel {
     this.exchangeCells(index, this.lastSelected);
     let currCell = this.cells[index.y][index.x];
     let lastCell = this.cells[lastSelected.y][lastSelected.x];
-    let currSameTypePoints = this.checkPoint(index);
-    let lastSameTypePoints = this.checkPoint(this.lastSelected);
+    let currSameTypePoints = Utils.checkPoint(this._cells, index);
+    let lastSameTypePoints = Utils.checkPoint(this._cells, this.lastSelected);
     console.log("lastSameTypePoints", lastSameTypePoints);
     this.lastSelected = null;
 
@@ -113,72 +113,6 @@ export class GridModel {
     return [crushPoints, effectCells];
   }
 
-  checkPoint(point: Vec2): Vec2[] {
-    let colPoints = this.checkWithDirection(point, [
-      new Vec2(1, 0),
-      new Vec2(-1, 0),
-    ]);
-    let rowPoints = this.checkWithDirection(point, [
-      new Vec2(0, 1),
-      new Vec2(0, -1),
-    ]);
-    // console.log(
-    //   "checkPoint:",
-    //   colPoints.length,
-    //   rowPoints.length,
-    //   colPoints,
-    //   rowPoints
-    // )
-    if (colPoints.length < 2 && rowPoints.length < 2) return [];
-    colPoints.push(point.clone());
-    let points = colPoints.concat(rowPoints);
-    let newCellStatus = CellState.Column;
-    // if (rowResult.length >= 5 || colResult.length >= 5) {
-    // newCellStatus = CELL_STATUS.BIRD;
-    // }
-    // else if (rowResult.length >= 3 && colResult.length >= 3) {
-    // newCellStatus = CELL_STATUS.WRAP;
-    // }
-    // else if (rowResult.length >= 4) {
-    // newCellStatus = CELL_STATUS.LINE;
-    // }
-    // else if (colResult.length >= 4) {
-    // newCellStatus = CELL_STATUS.COLUMN;
-    // }
-    // TODO 检查是否能产生更大级别的消除。
-    console.log("point:", points.length, points);
-    // 移除重复元素
-    let result = [];
-    let samePoints = [];
-    for (let i = 0; i < points.length; i++) {
-      if (samePoints.indexOf(points[i]) == -1) {
-        samePoints.push(points[i]);
-        result.push(points[i]);
-      }
-    }
-    return result;
-  }
-
-  checkWithDirection(point: Vec2, direction: Vec2[]) {
-    if (!this.cells[point.y] || !this.cells[point.y][point.x]) return [];
-    let result = [];
-    let currType = this.cells[point.y][point.x].type;
-    console.log("checkWithDirection:", currType, point);
-    for (let i = 0; i < direction.length; i++) {
-      let offset = direction[i];
-      let newPoint = point.clone().add(offset);
-      while (MapManager.Instance.validOffset(newPoint)) {
-        if (
-          !this.cells[newPoint.y][newPoint.x] ||
-          this.cells[newPoint.y][newPoint.x].type != currType
-        )
-          break;
-        result.push(newPoint);
-        newPoint = newPoint.clone().add(offset);
-      }
-    }
-    return result;
-  }
   // 处理消除逻辑
   performCrush(effectPoints: Vec2[], timeDelay: number): Array<CellModel> {
     console.log("performCrush: ", effectPoints);
@@ -197,7 +131,7 @@ export class GridModel {
     let currEffectPoints: Vec2[] = [];
     downEffectCells.forEach((p) => {
       console.log("performCrush cycle: ", p.toPoint());
-      let samePoints = this.checkPoint(p.toPoint());
+      let samePoints = Utils.checkPoint(this._cells, p.toPoint());
       if (samePoints.length > 2) {
         currEffectPoints = currEffectPoints.concat(samePoints);
       }
