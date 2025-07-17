@@ -8,6 +8,7 @@ export class CellModel {
   public type: number = -1;
   public isSelected: boolean = false;
   isDeath: boolean = false;
+  isVisible: boolean = true;
   isAttach: boolean = false;
   command: Command[] = [];
 

@@ -6,6 +6,7 @@ import {
   input,
   Input,
   EventTouch,
+  Label,
 } from "cc";
 import { MapManager } from "../Data/MapManager";
 import { GridModel } from "../Model/GridModel";
@@ -16,9 +17,12 @@ const { ccclass, property } = _decorator;
 export class GameScene extends Component {
   @property(Node)
   gridView: Node = null;
+  @property(Label)
+  scoreLabel: Label = null;
 
   grid: Grid = null;
   gridModel = new GridModel();
+  _score : number = 0;
 
   private static instance: GameScene;
   public static get Instance() {
@@ -29,6 +33,7 @@ export class GameScene extends Component {
       this.node.destroy();
       return;
     }
+    this.updateScore(this._score);
     GameScene.instance = this;
     this.grid = this.gridView.getComponent(Grid);
     this.grid.gridModel = this.gridModel;
@@ -41,5 +46,12 @@ export class GameScene extends Component {
     this.gridView.removeAllChildren();
     MapManager.Instance.init(5, 5);
     this.grid.initWithCellModels();
+  }
+
+  updateScore(score: number, delayTime: number) {
+    this.scheduleOnce((_) => {
+      this._score += score;
+      this.scoreLabel.string = this._score.toString();
+    }, delayTime)
   }
 }

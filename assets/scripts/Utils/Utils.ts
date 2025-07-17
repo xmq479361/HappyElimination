@@ -75,16 +75,16 @@ export class Utils {
     let currType = cells[point.y][point.x].type;
     for (let i = 0; i < direction.length; i++) {
       let offset = direction[i];
-      let newPoint = point.clone().add(offset);
+      let newPoint = new Vec2(point.x + offset.x, point.y + offset.y);
       console.log("checkWithDirection:", currType, offset, "=>", newPoint);
       while (MapManager.Instance.validOffset(newPoint)) {
         if (
-          !cells[newPoint.y][newPoint.x] ||
+          cells[newPoint.y][newPoint.x] == null ||
           cells[newPoint.y][newPoint.x].type != currType
         )
           break;
         result.push(newPoint);
-        newPoint = newPoint.clone().add(offset);
+        newPoint = new Vec2(newPoint.x + offset.x, newPoint.y + offset.y);
       }
     }
     return result;
@@ -107,8 +107,9 @@ export class Utils {
     //   rowPoints
     // )
     if (colPoints.length < 2 && rowPoints.length < 2) return [];
-    colPoints.push(point.clone());
-    let points = colPoints.concat(rowPoints);
+    let points = [point.clone()];
+    if (colPoints.length > 1) points = points.concat(colPoints);
+    if (rowPoints.length > 1) points = points.concat(rowPoints);
     let newCellStatus = CellState.Column;
     // if (rowResult.length >= 5 || colResult.length >= 5) {
     // newCellStatus = CELL_STATUS.BIRD;
@@ -126,13 +127,13 @@ export class Utils {
     console.log("point:", points.length, points);
     // 移除重复元素
     let result = [];
-    let samePoints = [];
-    for (let i = 0; i < points.length; i++) {
-      if (samePoints.indexOf(points[i]) == -1) {
-        samePoints.push(points[i]);
-        result.push(points[i]);
-      }
-    }
-    return Utils.unionPoints(result);
+    // let samePoints = [];
+    // for (let i = 0; i < points.length; i++) {
+    //   if (samePoints.indexOf(points[i]) == -1) {
+    //     samePoints.push(points[i]);
+    //     result.push(points[i]);
+    //   }
+    // }
+    return Utils.unionPoints(points);
   }
 }

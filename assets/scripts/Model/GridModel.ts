@@ -3,6 +3,7 @@ import { MapManager } from "../Data/MapManager";
 import { CellModel } from "./CellModel";
 import { AnimateTime, CellState } from "../Data/Consts";
 import { Utils } from "../Utils/Utils";
+import { GameScene } from "../Scene/GameScene";
 
 export class GridModel {
   private _cells: CellModel[][];
@@ -123,11 +124,12 @@ export class GridModel {
         this.cells[p.y][p.x] = null;
       }
     });
-    timeDelay += 1;
+    GameScene.Instance.updateScore(effectPoints.length * 10, timeDelay);
+    // timeDelay += 1;
     let downEffectCells = this.performDown(timeDelay);
     let resultCells: CellModel[] = effectCells.concat(downEffectCells);
     timeDelay += AnimateTime.DOWN;
-    let downPoints = downEffectCells.map((p) => p.toPoint()).concat(effectPoints);
+    let downPoints = Utils.unionPoints(downEffectCells.map((p) => p.toPoint()).concat(effectPoints));
     console.log("downPoints: ", downPoints);
     /// 下落后再次检测是否有可消除的元素
     // 如果有可消除的元素，则将其加入到effectPoints中
@@ -144,7 +146,7 @@ export class GridModel {
     // 递归处理可消除的元素
     if (currEffectPoints.length > 0) {
       log("递归处理可消除的元素: ", currEffectPoints);
-      let otherCells = this.performCrush(currEffectPoints, timeDelay + 1.5);
+      let otherCells = this.performCrush(currEffectPoints, timeDelay );
       resultCells = resultCells.concat(otherCells);
     }
     return Utils.unionCells(resultCells);
@@ -206,7 +208,7 @@ export class GridModel {
         cellModel.init(row, col);
         cellModel.setType(this.getRandomCellType());
         cellModel.setOffset(new Vec2(0, -emptyCount));
-        cellModel.setVisible(false, 0, 0)
+        cellModel.isVisible = false;
         cellModel.setVisible(true, 0, timeDelay - AnimateTime.DOWN)
         cellModel.moveTo(new Vec2(col, row), AnimateTime.DOWN, timeDelay);
         this._cells[row][col] = cellModel;
@@ -215,6 +217,7 @@ export class GridModel {
     }
     return effectCells;
   }
+
   exchangeCells(pos1: Vec2, pos2: Vec2) {
     var tmpModel = this.cells[pos1.y][pos1.x];
     this.cells[pos1.y][pos1.x] = this.cells[pos2.y][pos2.x];

@@ -63,6 +63,7 @@ export class CellView extends Component {
     );
     this.node.setPosition(position);
     this.addComponent(UIOpacity);
+    this.getComponent(UIOpacity).opacity = model.isVisible ? 255 : 0;
   }
   cancelSelectedAnimation() {}
 
@@ -132,12 +133,10 @@ export class CellView extends Component {
           this.animation.play("crush");
           this.scheduleOnce(() => {
             this.node.destroy();
-          }, command.playTime + command.delayTime);
+          }, command.playTime);
           break;
         case Action.SetVisible:
-          this.scheduleOnce(() => {
-            this.getComponent(UIOpacity).opacity = command.isVisible == true ? 255 : 0;
-          }, command.delayTime);
+          this.getComponent(UIOpacity).opacity = command.isVisible == true ? 255 : 0;
           break;
         default:
           break;
